@@ -8,15 +8,15 @@ import com.example.springsecurity.Service.RoleServiceImpl;
 import com.example.springsecurity.Service.UserServiceImpl;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Set;
 
 
 @Controller
+@RequestMapping("/admin")
 public class AdminController {
     private final UserServiceImpl userService;
     private final RoleServiceImpl roleService;
@@ -25,35 +25,25 @@ public class AdminController {
         this.userService = userService;
         this.roleService = roleService;
     }
-
-
-    @GetMapping(value = "/admin", produces = "text/html; charset=UTF-8")
-    public String carList(Model model) {
-        List<User> users = userService.displayAllUsers();
-        model.addAttribute("users", users);
+    @GetMapping()
+    public String carList(Model model, Principal principal) {
+        User userTest = userService.findByUserName(principal.getName());
+        model.addAttribute("users", userService.displayAllUsers());
+        model.addAttribute("allRoles", roleService.getRoleList());
+        model.addAttribute("login", userTest);
         return "admin";
     }
-
-    @GetMapping(value = "/addNewUser", produces = "text/html; charset=UTF-8")
-    public String newCar(Model model) {
-        model.addAttribute("user", new User());
-        model.addAttribute("allRoles",  roleService.getRoleList());
-        return "/addNewUser";
-    }
-
-    @PostMapping(value = "/addNewUser", produces = "text/html; charset=UTF-8")
-    public String create(User user) {
+    @PostMapping()
+    public String create(@ModelAttribute("user") User user) {
         userService.addNewUser(user);
         return "redirect:/admin";
     }
-
-
     @GetMapping(value = "/Update-User", produces = "text/html; charset=UTF-8")
     public String userUpdate(@RequestParam("id") Long id, Model model) {
         User user = userService.getUserById(id);
         model.addAttribute("user", user);
-        model.addAttribute("allRoles", roleService.getRoleList());
-        return "/Update-User";
+        model.addAttribute("allRoles",roleService.getRoleList());
+        return "Login";
     }
 
     @PostMapping(value = "/Update-User", produces = "text/html; charset=UTF-8")
@@ -75,10 +65,10 @@ public class AdminController {
         return "redirect:/admin";
     }
 
-    @GetMapping("/delete")
-    public String delete(@RequestParam Long id) {
+    @GetMapping("/{id}/delete")
+    public String delete(@PathVariable("id") Long id) {
         userService.deleteUser(id);
-        return "redirect:admin";
-
+        return "redirect:/admin";
     }
 }
+
